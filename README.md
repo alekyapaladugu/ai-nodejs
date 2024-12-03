@@ -1,1 +1,1 @@
-# ai-nodejs
+# AI Powered NodeJS Application
