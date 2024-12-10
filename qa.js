@@ -4,13 +4,15 @@ import {Document} from 'langchain/document'
 import {MemoryVectorStore} from 'langchain/vectorstores/memory'
 import { CharacterTextSplitter } from 'langchain/text_splitter'
 import  {PDFLoader} from "@langchain/community/document_loaders/fs/pdf";
+import fs from "fs";
+import path from "path";
 import {YoutubeLoader} from "@langchain/community/document_loaders/web/youtube";
 
 
 
 const question = process.argv[2] || 'hi'
 const video = `https://youtu.be/zR_iuq2evXo?si=cG8rODgRgXOx9_Cn`
-const pdf_path = './data/xbox.pdf'
+const pdf_path = './data'
 
 const createStore =  (docs) => 
      MemoryVectorStore.fromDocuments(docs, new OpenAIEmbeddings())
@@ -37,17 +39,36 @@ const docsFromYTVideo = async(video) => {
 }
 
 const docsFromPDF = async () => {
-    const loader = new PDFLoader(pdf_path)
-    const splitter = new CharacterTextSplitter({
-        separator: '. ',           // Split chunks by spaces
-        chunkSize: 2500,          // Maximum characters per chunk
-        chunkOverlap: 200,        // Overlap size for better context
-    });
+    try{
+        // const loader = new PDFLoader(pdf_path)
+        const allDocuments = [];
+        const files = fs.readdirSync(pdf_path).filter((file) => path.extname(file).toLowerCase() === ".pdf");
 
-    // Load and split the pdf into chunks
-    const rawDocuments = await loader.load()
-    const documents = await splitter.splitDocuments(rawDocuments);
-    return documents;
+        if (files.length === 0) {
+            console.log("No PDF files found in the directory.");
+            return [];
+        }
+
+        console.log(`Found ${files.length} PDF(s):`, files);
+        const splitter = new CharacterTextSplitter({
+            separator: '. ',           // Split chunks by spaces
+            chunkSize: 2500,          // Maximum characters per chunk
+            chunkOverlap: 200,        // Overlap size for better context
+        });
+        for (const file of files) {
+            const fullPath = path.join(pdf_path, file);
+            const loader = new PDFLoader(fullPath);
+
+            // Load and split the pdf into chunks
+            const rawDocuments = await loader.load()
+            const documents = await splitter.splitDocuments(rawDocuments);
+            allDocuments.push(...documents);
+        }
+        return allDocuments;
+    } catch (error) {
+        console.error("Error processing PDFs:", error);
+        throw error;
+    }
 }
 
 const loadStore = async () => {
