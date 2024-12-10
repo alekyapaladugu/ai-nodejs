@@ -10,6 +10,7 @@ import {YoutubeLoader} from "@langchain/community/document_loaders/web/youtube";
 
 const question = process.argv[2] || 'hi'
 const video = `https://youtu.be/zR_iuq2evXo?si=cG8rODgRgXOx9_Cn`
+const pdf_path = './data/xbox.pdf'
 
 const createStore =  (docs) => 
      MemoryVectorStore.fromDocuments(docs, new OpenAIEmbeddings())
@@ -36,7 +37,7 @@ const docsFromYTVideo = async(video) => {
 }
 
 const docsFromPDF = async () => {
-    const loader = new PDFLoader('xbox.pdf')
+    const loader = new PDFLoader(pdf_path)
     const splitter = new CharacterTextSplitter({
         separator: '. ',           // Split chunks by spaces
         chunkSize: 2500,          // Maximum characters per chunk
